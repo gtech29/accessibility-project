@@ -1,6 +1,8 @@
 "use client";
 
+import React from "react";
 import { useEffect, useRef, useState } from "react";
+import Webcam from "react-webcam";
 
 interface VideoLLMProps {
   setTranscript: React.Dispatch<React.SetStateAction<string[]>>;
@@ -59,21 +61,33 @@ export default function VideoLLM({ setTranscript }: VideoLLMProps) {
 
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      // const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const imageBase64 = canvas.toDataURL("image/jpeg");
 
       // This is where YOLO inference would happen
       // const detection = await runYolo(imageData);
       // const llmResponse = await sendToBackend(detection);
 
       // Simulated async inference delay (~5fps)
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      // await new Promise((resolve) => setTimeout(resolve, 200));
 
       // Simulate receiving a full interpreted sentence occasionally
-      if (Math.random() > 0.985) {
-        const simulatedSentence = "Simulated interpreted sentence.";
+      // if (Math.random() > 0.985) {
+      //   const simulatedSentence = "Simulated interpreted sentence.";
 
-        setTranscript((prev) => [...prev, simulatedSentence]);
-      }
+
+      //still needs to be implemented, but this is where the webcam capture logic would go
+      const WebcamCapture = () => {
+      const webcamRef = React.useRef(null);
+
+      const capture = React.useCallback(() => {
+         const imageSrc = webcamRef.current.getScreenshot();
+        console.log(imageSrc); // You can use this image source as needed
+    }, [webcamRef]);
+
+
+      //   setTranscript((prev) => [...prev, simulatedSentence]);
+      // }
     };
 
     const startLoop = async () => {
