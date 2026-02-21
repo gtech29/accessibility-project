@@ -1,0 +1,8 @@
+{
+  "asl_interpretation_request": {
+    "text": "I AM HAPPY",
+    "confidence": 0.93,
+    "emotion_hint": "happiness",
+    "desired_output": "Generate expressive spoken English sentence."
+  }
+}
