@@ -9,7 +9,7 @@ This project is an **AI-powered American Sign Language (ASL) translator** that c
 3. **Translates** letter sequences into coherent, grammatically correct sentences using a large language model (Gemma)
 4. **Displays** the result as natural text and inferred emotion
 
-The frontend streams frames to the backend, which runs YOLO for sign detection and Ollama/Gemma for language refinement.
+The frontend streams frames to the backend, which runs YOLO for sign detection and Ollama & Gemma for language refinement.
 
 ---
 
@@ -28,7 +28,7 @@ The frontend streams frames to the backend, which runs YOLO for sign detection a
 
 ### Prerequisites
 
-- **Python 3.10+**
+- **Python 3.12.7**
 - **Node.js 18+** and npm
 - **Ollama** (for running Gemma locally)
 - **Webcam** (for sign language input)
