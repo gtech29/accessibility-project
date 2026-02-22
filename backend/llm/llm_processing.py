@@ -133,10 +133,13 @@ def process_llm(word: str):
         )
         print(response2['response'])
 
-        emotion = emotion + response2['response']
+       # emotion = emotion + response2['response']
+
+        results["Emotion"] = emotion
+        results["Sentence"] = sentence
 
         print(sentence)
         print(emotion)
 
         return1 = [sentence, emotion]
-        return return1
+        return results

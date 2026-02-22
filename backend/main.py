@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 from computer_vision.live_asl import process_frame
 from llm.llm_processing import process_llm
+from elevenlab.elevenlabs1 import process_elevenlabs
 import asyncio
 
 camera_ready = False
@@ -44,4 +45,12 @@ async def interpret(file: UploadFile = File(...)):
         return {"Error": "No sign detected"}
     
     llm_results_dict = process_llm(yolo_result_string)
-    return {"word": llm_results_dict}
+    #llm_results_dict = {"Sentence":"I love you", "Emotion": "happy"}
+
+
+    mp3_filepath = process_elevenlabs(llm_results_dict)
+
+    print(mp3_filepath)
+
+    #return {"word": llm_results_dict}
+    return {"word": mp3_filepath}
