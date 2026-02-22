@@ -11,8 +11,7 @@ export default function VideoLLM({ setTranscript }: VideoLLMProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
+  const isCapturingRef = useRef(true);
   const [status, setStatus] = useState("Initializing camera...");
   const [lastScreenshot, setLastScreenshot] = useState<string | null>(null);
 
@@ -41,9 +40,7 @@ export default function VideoLLM({ setTranscript }: VideoLLMProps) {
     initCamera();
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      isCapturingRef.current = false;
 
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
@@ -51,17 +48,23 @@ export default function VideoLLM({ setTranscript }: VideoLLMProps) {
     };
   }, []);
 
-  const captureAndSend = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+  const captureAndSend = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (!videoRef.current || !canvasRef.current) {
+        resolve();
+        return;
+      }
 
-    const video = videoRef.current;
+      const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      resolve();
+      return;
+    }
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     // Update preview
@@ -70,7 +73,10 @@ export default function VideoLLM({ setTranscript }: VideoLLMProps) {
 
     // Send as real file
     canvas.toBlob(async (blob) => {
-      if (!blob) return;
+      if (!blob) {
+        resolve();
+        return;
+      }
 
       const formData = new FormData();
       formData.append("file", blob, "screenshot.jpg");
@@ -82,21 +88,28 @@ export default function VideoLLM({ setTranscript }: VideoLLMProps) {
         });
 
         const data = await response.json();
-        console.log("Backend response:", data);
+        //console.log("Backend response:", data);
 
-        if (data.text) {
-          setTranscript((prev) => [...prev, data.text]);
+        if (data.letter) {
+          setTranscript((prev) => [...prev, data.letter]);
         }
+        resolve();
       } catch (error) {
         console.error("Upload error:", error);
+        reject(error);
       }
     }, "image/jpeg");
-  };
+  });
+};
 
-  const startCapturing = () => {
-    intervalRef.current = setInterval(() => {
-      captureAndSend();
-    }, 20000); // every 20 seconds
+  const startCapturing = async () => {
+    const run = async () => {
+      while (isCapturingRef.current) {
+        await captureAndSend();
+        await new Promise((r) => setTimeout(r, 0));
+      }
+    };
+    run();
   };
 
   return (
