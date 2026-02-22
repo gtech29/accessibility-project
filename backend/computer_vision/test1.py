@@ -1,6 +1,9 @@
 from ultralytics import YOLO
 import cv2
 
+# Development Testing only! Web-app does not use this script!
+# Prompt: Create a python script that captures video from the webcam and runs inference on the video using the YOLO11L model.
+
 model = YOLO("yolo11l.pt")
 cap = cv2.VideoCapture(0)  # or path to video file
 
