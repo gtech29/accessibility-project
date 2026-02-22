@@ -12,7 +12,7 @@ model = YOLO(str(_MODEL_PATH))
 
 # Exclude these letters because signing them is super hard and my hand is tired.
 # Make sure these are capitizled. 
-EXCLUDED_NAMES = {"J", "Z", "T", "C", "G", "A"} 
+EXCLUDED_NAMES = {"J", "Z", "T", "C", "G", "A", "D"} 
 
 # list allowed_indices is a list of the class IDs of the letters that are allowed; 
 allowed_indices = []
