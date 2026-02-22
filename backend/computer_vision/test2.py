@@ -3,7 +3,7 @@ import cv2
 from collections import Counter
 from ultralytics import YOLO
 
-# Development Testing only! Web-app does not use this script!git checkout
+# Development Testing only! Web-app does not use this script!
 # Prompt: Create a streamlit app that captures video from the webcam and runs inference on the video using the YOLO11L model.
 
 st.set_page_config(page_title="ASL Fingerspelling", layout="wide")
