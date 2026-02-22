@@ -12,7 +12,7 @@ model = YOLO(str(_MODEL_PATH))
 
 # Exclude these letters because signing them is super hard and my hand is tired.
 # Make sure these are capitizled. 
-EXCLUDED_NAMES = {"J", "Z", "T", "C", "G", "A"} 
+EXCLUDED_NAMES = {"J", "Z", "T", "C", "G", "A", "D"} 
 
 # list allowed_indices is a list of the class IDs of the letters that are allowed; 
 allowed_indices = []
@@ -22,11 +22,13 @@ for class_id, class_name in model.names.items():
         allowed_indices.append(class_id)
 
 frame_buffer: List[np.ndarray] = []
-BUFFER_SIZE = 11
+BUFFER_SIZE = 20
 last_output: Optional[str] = None
+current_string = ""
+no_detections_batch = 0
 
 def process_frame(image: np.ndarray) -> Optional[str]:
-    global frame_buffer, last_output
+    global frame_buffer, last_output, current_string, no_detections_batch
     # print(f"Received frame, buffer size: {len(frame_buffer) + 1}", flush=True)  # debug
     frame_buffer.append(image)
 # from list frames, if length < BUFFER_SIZE (probably 11), return None
@@ -57,16 +59,35 @@ def process_frame(image: np.ndarray) -> Optional[str]:
 
     batch_size = len(results)
     frame_buffer.clear()
+        
     print(f"DEBUG: all_classes={all_classes}, frames_with_detections={frames_with_detections}, batch_size={batch_size}, last_output={last_output}", flush=True)
-# avoids ties and ensures we can do majority vote
-# ensure at least more than half the frames have a class detected
-    if all_classes and (frames_with_detections > (batch_size // 2)):
-# from python import collections, Counter counts # of times element appears in list & returns first tuple, first element of that tuple
+
+    # A "valid detection batch" means we got detections AND a majority of frames had detections
+    valid_detection_batch = bool(all_classes) and (frames_with_detections > (batch_size // 2))
+
+    if valid_detection_batch:
         most_common = Counter(all_classes).most_common(1)[0][0]
-# if this does not equal last output, print to terminal and set last_output to this new class/letter
-        if most_common != last_output:
-            print(most_common)
+
+        # We detected something -> reset the "empty batch" counter
+        no_detections_batch = 0
+
+        # Only append if it's NOT a duplicate
+        if last_output is None or most_common != last_output:
             last_output = most_common
-            return most_common
+            current_string += most_common
+
+        print(current_string)
+        return None
+
+    # If we reach here, it's truly an "empty" batch
+    no_detections_batch += 1
+
+    # Send after TWO empty batches
+    if no_detections_batch >= 3 and current_string:
+        final_word = current_string
+        current_string = ""
+        last_output = None
+        no_detections_batch = 0
+        return final_word
 
     return None
