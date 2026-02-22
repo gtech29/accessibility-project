@@ -4,6 +4,9 @@ import numpy as np
 import cv2
 from computer_vision.live_asl import process_frame
 from llm.llm_processing import process_llm
+import asyncio
+
+camera_ready = False
 
 app = FastAPI()
 
@@ -17,6 +20,13 @@ app.add_middleware(
 
 @app.post("/interpret")
 async def interpret(file: UploadFile = File(...)):
+    global camera_ready
+
+    if not camera_ready:
+        print("Initializing camera... Please wait 5 seconds")
+        await asyncio.sleep(5)
+        camera_ready = True
+
     contents = await file.read()
     if not contents:
         return {"error": "No file uploaded"}
@@ -28,8 +38,10 @@ async def interpret(file: UploadFile = File(...)):
         return {"error": "Could not decode image"}
 
     # Run YOLO
-    letter = process_frame(image)
-    if letter != None:
-        x = process_llm(letter)
+    yolo_result_string = process_frame(image)
+
+    if yolo_result_string is None:
+        return {"Error": "No sign detected"}
     
-    return {"letter": letter}
+    llm_results_dict = process_llm(yolo_result_string)
+    return {"word": llm_results_dict}
