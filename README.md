@@ -29,20 +29,23 @@ The frontend streams frames to the backend, which runs YOLO for sign detection a
 ### Prerequisites
 
 - **Python 3.12.7**
-- **Node.js 18+** and npm
-- **Ollama** (for running Gemma locally)
+- **Node.js 18+** and **npm**
+- **Ollama** (for running **Gemma** locally)
 - **Webcam** (for sign language input)
+- **Audio Output Device** (i.e speakers)
 
 ### 1. Install Ollama and Gemma
 
 [Download and install Ollama](https://ollama.ai), then pull the Gemma model:
 
+In the terminal or Git Bash, do:
 ```bash
 ollama pull gemma3
 ```
 
 ### 2. Backend Setup
 
+In the terminal or Git Bash, do:
 ```bash
 cd backend
 python -m venv venv
@@ -52,6 +55,7 @@ pip install fastapi uvicorn numpy opencv-python ultralytics ollama
 
 Start the backend server:
 
+In the terminal or Git Bash, do:
 ```bash
 uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
@@ -60,7 +64,7 @@ The API will be available at `http://127.0.0.1:8000`. The first request may take
 
 ### 3. Frontend Setup
 
-In a separate terminal:
+In a separate terminal or Git Bash:
 
 ```bash
 cd frontend
@@ -116,3 +120,4 @@ accessibility-project/
 - The YOLO model recognizes ASL letters; some letters (J, Z, T, C, G, A) are excluded by default due to signing difficulty.
 - Frames are buffered and processed in batches to improve detection stability.
 - The LLM expands common abbreviations (e.g., "hbu" → "how about you") and infers emotion from the text.
+- Originally CORSMiddleware was to be used for cross-domain
