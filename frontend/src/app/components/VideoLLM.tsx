@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-import { useEffect, useRef, useState } from "react";
-import Webcam from "react-webcam";
+import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 interface VideoLLMProps {
   setTranscript: React.Dispatch<React.SetStateAction<string[]>>;
@@ -12,9 +11,10 @@ export default function VideoLLM({ setTranscript }: VideoLLMProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const isRunningRef = useRef<boolean>(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [status, setStatus] = useState("Initializing camera...");
+  const [lastScreenshot, setLastScreenshot] = useState<string | null>(null);
 
   useEffect(() => {
     const initCamera = async () => {
@@ -31,90 +31,73 @@ export default function VideoLLM({ setTranscript }: VideoLLMProps) {
         }
 
         setStatus("Camera active");
+        startCapturing();
       } catch (error) {
         console.error("Camera error:", error);
         setStatus("Camera access denied");
       }
     };
 
-    const waitForVideoReady = () =>
-      new Promise<void>((resolve) => {
-        if (!videoRef.current) return resolve();
-
-        if (videoRef.current.readyState >= 2) {
-          resolve();
-        } else {
-          videoRef.current.onloadedmetadata = () => resolve();
-        }
-      });
-
-    const processFrame = async () => {
-      if (!videoRef.current || !canvasRef.current) return;
-
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      // const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const imageBase64 = canvas.toDataURL("image/jpeg");
-
-      // This is where YOLO inference would happen
-      // const detection = await runYolo(imageData);
-      // const llmResponse = await sendToBackend(detection);
-
-      // Simulated async inference delay (~5fps)
-      // await new Promise((resolve) => setTimeout(resolve, 200));
-
-      // Simulate receiving a full interpreted sentence occasionally
-      // if (Math.random() > 0.985) {
-      //   const simulatedSentence = "Simulated interpreted sentence.";
-
-
-      //still needs to be implemented, but this is where the webcam capture logic would go
-      const WebcamCapture = () => {
-      const webcamRef = React.useRef(null);
-
-      const capture = React.useCallback(() => {
-         const imageSrc = webcamRef.current.getScreenshot();
-        console.log(imageSrc); // You can use this image source as needed
-    }, [webcamRef]);
-
-
-      //   setTranscript((prev) => [...prev, simulatedSentence]);
-      // }
-    };
-
-    const startLoop = async () => {
-      isRunningRef.current = true;
-
-      await waitForVideoReady();
-
-      while (isRunningRef.current) {
-        await processFrame();
-      }
-    };
-
-    const start = async () => {
-      await initCamera();
-      await startLoop();
-    };
-
-    start();
+    initCamera();
 
     return () => {
-      isRunningRef.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
 
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [setTranscript]);
+  }, []);
+
+  const captureAndSend = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Update preview
+    const imageBase64 = canvas.toDataURL("image/jpeg");
+    setLastScreenshot(imageBase64);
+
+    // Send as real file
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+
+      const formData = new FormData();
+      formData.append("file", blob, "screenshot.jpg");
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/interpret", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+        console.log("Backend response:", data);
+
+        if (data.text) {
+          setTranscript((prev) => [...prev, data.text]);
+        }
+      } catch (error) {
+        console.error("Upload error:", error);
+      }
+    }, "image/jpeg");
+  };
+
+  const startCapturing = () => {
+    intervalRef.current = setInterval(() => {
+      captureAndSend();
+    }, 20000); // every 20 seconds
+  };
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -127,6 +110,16 @@ export default function VideoLLM({ setTranscript }: VideoLLMProps) {
         muted
         className="w-full max-w-2xl rounded-lg shadow-lg bg-black"
       />
+
+      {lastScreenshot && (
+        <Image
+          src={lastScreenshot}
+          alt="Last Screenshot"
+          width={256}
+          height={256}
+          className="w-64 rounded shadow"
+        />
+      )}
 
       <canvas ref={canvasRef} className="hidden" />
     </div>

@@ -1,41 +1,45 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-import requests
+from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from ultralytics import YOLO
+import numpy as np
+import cv2
 
 app = FastAPI()
 
-OLLAMA_URL = "http://localhost:11434/api/chat"
-MODEL_NAME = "llama3.1:8b-instruct-q8_0"
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-SYSTEM_PROMPT = """
-You are an ASL interpretation engine.
-You will receive raw ASL letter sequences with no spaces and simplified grammar.
-Your task is to:
-- Infer correct word boundaries.
-- Add necessary English helper words.
-- Convert the message into natural, grammatically correct, expressive English.
-Preserve the intended meaning.
-Return only the final English sentence. Do not explain. Do not add extra text.
-"""
-
-class ASLRequest(BaseModel):
-    raw_asl: str
+# Load YOLO model once
+model = YOLO("yolov11l.pt")
 
 @app.post("/interpret")
-def interpret_asl(data: ASLRequest):
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": data.raw_asl}
-    ]
+async def interpret(file: UploadFile = File(...)):
+    contents = await file.read()
+    if not contents:
+        return {"error": "No file uploaded"}
 
-    response = requests.post(
-        OLLAMA_URL,
-        json={
-            "model": MODEL_NAME,
-            "messages": messages,
-            "stream": False
-        }
-    )
+    np_array = np.frombuffer(contents, np.uint8)
+    image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
 
-    result = response.json()
-    return result
+    if image is None:
+        return {"error": "Could not decode image"}
+
+    # Run YOLO
+    results = model(image)
+
+    detections = []
+
+    for result in results:
+        for box in result.boxes:
+            detections.append({
+                "class_id": int(box.cls[0]),
+                "confidence": float(box.conf[0]),
+                "bbox": box.xyxy[0].tolist()
+            })
+
+    return {"detections": detections}
