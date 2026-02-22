@@ -2,7 +2,7 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
 import cv2
-from .computer_vision.live_asl import process_frame
+from computer_vision.live_asl import process_frame
 
 app = FastAPI()
 
