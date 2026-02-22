@@ -3,9 +3,12 @@ import numpy as np
 from ultralytics import YOLO
 # import cv2
 from collections import Counter
+from pathlib import Path
 
 # We are using the YOLO11L model; To set model, put in path to model file inside YOLO()
-model = YOLO("backend/computer_vision/yolo11l.pt")
+# model = YOLO("./yolo11l.pt")
+_MODEL_PATH = Path(__file__).resolve().parent / "yolo11l.pt"
+model = YOLO(str(_MODEL_PATH))
 
 # Exclude these letters because signing them is super hard and my hand is tired.
 # Make sure these are capitizled. 
