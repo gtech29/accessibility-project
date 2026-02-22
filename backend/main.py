@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
 import cv2
 from computer_vision.live_asl import process_frame
+from llm.llm_processing import process_llm
 
 app = FastAPI()
 
@@ -28,5 +29,7 @@ async def interpret(file: UploadFile = File(...)):
 
     # Run YOLO
     letter = process_frame(image)
-
+    if letter != None:
+        x = process_llm(letter)
+    
     return {"letter": letter}

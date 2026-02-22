@@ -65,7 +65,7 @@ def process_frame(image: np.ndarray) -> Optional[str]:
         most_common = Counter(all_classes).most_common(1)[0][0]
 # if this does not equal last output, print to terminal and set last_output to this new class/letter
         if most_common != last_output:
-            print(most_common)
+            print(type(most_common))
             last_output = most_common
             return most_common
 
