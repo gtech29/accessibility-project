@@ -17,7 +17,7 @@ The frontend streams frames to the backend, which runs YOLO for sign detection a
 
 | Layer | Technology |
 |-------|------------|
-| **Backend** | FastAPI |
+| **Backend** | FastAPI, CORSMiddleware |
 | **Computer Vision** | YOLO11L (Ultralytics) |
 | **LLM** | Gemma 3 via Ollama |
 | **Frontend** | Next.js, React, Tailwind CSS |
