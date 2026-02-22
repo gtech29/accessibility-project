@@ -1,8 +1,8 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from ultralytics import YOLO
 import numpy as np
 import cv2
+from .computer_vision.live_asl import process_frame
 
 app = FastAPI()
 
@@ -13,9 +13,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Load YOLO model once
-model = YOLO("yolov11l.pt")
 
 @app.post("/interpret")
 async def interpret(file: UploadFile = File(...)):
@@ -30,16 +27,6 @@ async def interpret(file: UploadFile = File(...)):
         return {"error": "Could not decode image"}
 
     # Run YOLO
-    results = model(image)
+    letter = process_frame(image)
 
-    detections = []
-
-    for result in results:
-        for box in result.boxes:
-            detections.append({
-                "class_id": int(box.cls[0]),
-                "confidence": float(box.conf[0]),
-                "bbox": box.xyxy[0].tolist()
-            })
-
-    return {"detections": detections}
+    return {"letter": letter}
