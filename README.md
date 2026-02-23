@@ -118,7 +118,7 @@ accessibility-project/
 
 ## Notes
 
-- The YOLO model recognizes ASL letters; some letters (J, Z, T, C, G, A) are excluded by default due to signing difficulty.
+- The YOLO model recognizes ASL letters; some letters (J, Z) are excluded by default due to signing difficulty.
 - Frames are buffered and processed in batches to improve detection stability.
 - The LLM expands common abbreviations (e.g., "hbu" → "how about you") and infers emotion from the text.
-- Originally CORSMiddleware was to be used for cross-domain
+- Originally CORSMiddleware was to be used for cross-domain.
